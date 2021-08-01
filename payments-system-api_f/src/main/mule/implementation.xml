@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<flow name="variableSubFlow" doc:id="37584855-971e-400c-b745-85617049e981" >
+		<set-variable value="#[attributes.uriParams.'customerId']" doc:name=" customerId" doc:id="2b104323-048b-485b-8884-121cd92cf491" variableName=" customerId"/>
+		<set-variable value="#[payload.customerId]" doc:name="customerId" doc:id="c9c3c6c4-9e58-40af-809f-9799c09f38fe" variableName="customerId"/>
+		<set-variable value="#[payload.paymentNumber]" doc:name="paymentNumber" doc:id="b1a6ec7c-46a6-41a6-acea-5069f3964023" variableName=" paymentNumber"/>
+		<set-variable value="#[payload.paymentDate]" doc:name="paymentDate" doc:id="c13caf2b-2157-45a5-b812-4f133b8ed25c" variableName="paymentDate"/>
+		<set-variable value="#[payload.amount]" doc:name="amount" doc:id="8dfdabb5-53aa-4c96-8de8-1ef662c55987" variableName="amount"/>
+	</flow>
+	<flow name="getPaymentsFlow" doc:id="7421c0ac-f864-4158-b680-b0ac2d8cb080" >
+		<db:select doc:name="Select" doc:id="dc0baa9f-3ecd-45b5-adf6-8d0404357cdc" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from paymentDetails]]></db:sql>
+		</db:select>
+		<choice doc:name="Choice" doc:id="cb7d410a-d53d-44ce-9435-f7751866acea" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="Transform Message" doc:id="c53b7d7b-7c49-4376-96e0-44f2ed266395">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	customerId: payload01.customerId,
+	paymentNumber: payload01.paymentId,
+	paymentDate: payload01.paymentDate as Date{
+		format: "dd/MMM/yyyy"
+	} default "",
+	amount: payload01.amount default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="fd68489c-cfb5-44df-a86d-cd39b3578f1a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Payment Details are not available"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="getPaymentByIdFlow" doc:id="27ec6465-fc36-4367-b2a5-5619f5a17037" >
+		<db:query-single doc:name="Query single" doc:id="2d088234-17e8-4691-8935-5aa0b21ba5aa" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from paymentDetails where customerId= :customerId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	customerId: attributes.uriParams.'customerId'
+}]]]></db:input-parameters>
+		</db:query-single>
+		<choice doc:name="Choice" doc:id="afc622bb-db89-4148-afb7-7ede97271714" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="Transform Message" doc:id="988f94fe-2967-48bd-8d35-7de46e3a4447">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	customerId: payload.customerId,
+	paymentNumber: payload.paymentId,
+	paymentDate: payload.paymentDate as Date{
+		format: "dd/MMM/yyyy"
+	} default "",
+	amount: payload.amount default 0
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="f52e6b1f-3568-4709-9cc3-0e27bb4373cb" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Invalid CustomerId"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="patchPaymentFlow" doc:id="978b578f-36a3-4520-a806-c3e44c3770b8" >
+		<flow-ref doc:name="variableSubFlow" doc:id="5cbc77ba-0bf0-441b-b09a-24287d567828" name="variableSubFlow"/>
+		<db:update doc:name="Update" doc:id="9098d62d-f682-4024-9882-b19aa9ca5f4b" config-ref="Database_Config">
+			<db:sql ><![CDATA[update paymentDetails set paymentDate= :paymentDate,amount= :amount where customerId= :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	paymentDate: vars.paymentDate,
+	amount: vars.amount,
+	id: attributes.uriParams.'customerId'
+}]]]></db:input-parameters>
+		</db:update>
+		<choice doc:name="Choice" doc:id="b108db81-5ea6-4225-a9e8-5c0641dee262" >
+			<when expression="#[payload.affectedRows&gt;0]">
+				<ee:transform doc:name="Transform Message" doc:id="fcf2e191-3d88-4082-95f2-b64411d69b88" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "The payment Details for the Id " ++ (vars.customerId) ++ " has been updated"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="9be385fe-e6e7-4b30-9930-56a64b1596b5" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Invalid Customer ID"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="deletePaymentFlow" doc:id="091c21eb-8e90-406a-8c81-b76ac8f8ca34" >
+		<flow-ref doc:name="variableSubFlow" doc:id="ae926304-1790-4c2e-9a44-63a02388aed8" name="variableSubFlow"/>
+		<db:delete doc:name="Delete" doc:id="2534de65-2803-4db7-99ea-81a1ad3d4786" config-ref="Database_Config">
+			<db:sql ><![CDATA[delete from paymentDetails where customerId= :customerId]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	customerId: vars.customerId
+}]]]></db:input-parameters>
+		</db:delete>
+		<choice doc:name="Choice" doc:id="6407ba8e-aa6d-44f9-9072-4cdb2662c827" >
+			<when expression="#[payload==1]">
+				<ee:transform doc:name="Transform Message" doc:id="a9a9bc9d-e629-443a-b2d2-0c05c1fd1c95">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Payment Details for the CustomerId " ++ (vars.customerId) ++ " has been deleted sucessfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="2afb417b-dd6b-485c-a3f4-264950815047" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "CustomerId " ++  vars.customerId ++ " is not available"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="postPaymentFlow" doc:id="246928bb-3123-4b55-9b71-5aa20c549d83" >
+		<flow-ref doc:name="variableSubFlow" doc:id="be8c808a-3d00-4a33-a921-54a13c0e91fd" name="variableSubFlow" />
+		<db:query-single doc:name="Query_single" doc:id="38604c6d-ee16-4560-a458-58ac8ff63175" config-ref="Database_Config">
+			<db:sql ><![CDATA[select max(paymentId) from paymentDetails]]></db:sql>
+		</db:query-single>
+		<db:insert doc:name="Insert" doc:id="81dc24e5-1374-4deb-a363-2d271081a9f2" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into paymentDetails (customerId, paymentId, paymentDate, amount) values (:customerId, :paymentId, :paymentDate, :amount)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	customerId: vars.customerId,
+	'paymentId': (payload."max(paymentId)" as Number default 0)+1,
+	'paymentDate': vars.paymentDate,
+	'amount': vars.amount
+}]]]></db:input-parameters>
+		</db:insert>
+		<choice doc:name="Choice" doc:id="e1535d82-d3fd-4b11-8249-01078d169825" >
+			<when expression="#[payload.affectedRows&gt;0]" >
+				<db:query-single doc:name="Query single" doc:id="0081aee5-64d0-4931-aa1f-acb4f3313d7c" config-ref="Database_Config">
+					<db:sql ><![CDATA[select max(paymentId) from paymentDetails]]></db:sql>
+				</db:query-single>
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="368b86c9-72ad-48d2-ab93-28e557c34642" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"message": "Payment details for Customer " ++ vars.customerId ++ " was created with PaymentId: " ++ (payload."max(paymentId)" as String default "")
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Copy_of_Transform Message" doc:id="013fc224-6154-4df9-875b-67739c5c6d96" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Insert into database was unsuccessful"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[500]" doc:name="Variable" doc:id="b02b5ad3-2b5b-4761-9975-30175da2d4b9" variableName="httpStatus" />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>

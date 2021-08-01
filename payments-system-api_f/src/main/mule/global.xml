@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	<http:listener-config name="payments-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
+    </http:listener-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="a6a260dd-a0c1-4704-a2f6-e196c11b636e" file="payment.yaml" />
+    <configuration doc:name="Configuration" doc:id="e28e7426-1cfa-47bd-9705-fe45873fde6c" defaultErrorHandler-ref="GlobalError_Handler1" />
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="9d6f9d04-c4d1-4e5c-9000-40ae83690e4e" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<error-handler name="GlobalError_Handler1" doc:id="f96c1709-7876-44d8-936e-fec245f14e3d" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6a2567fb-c06c-4551-9ac8-8931e9290e21" type="DB:BAD_SQL_SYNTAX">
+			<set-payload value="Bad sql syntax error occurred" doc:name="Set Payload" doc:id="5cde8c74-7dfe-4b6e-9958-c9cf6d18174b" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a39a7b03-9b2b-4865-8170-303e310a0b2f" type="DB:CONNECTIVITY">
+			<set-payload value="Connectivity error occurred" doc:name="Set Payload" doc:id="f4359ab4-ad38-437f-abaf-27f3ac64c633" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="122ff915-2da0-46a6-bb22-f538b40c857e" type="EXPRESSION">
+			<set-payload value="Expression error occurred" doc:name="Set Payload" doc:id="34c4c569-ba0b-4d3b-8697-368fab296310" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4422f015-8004-433f-8ad9-327c4910b66f" type="ANY">
+			<set-payload value="Some error occurred" doc:name="Set Payload" doc:id="4cb76430-f379-474e-b412-ad520287af60" />
+		</on-error-continue>
+	</error-handler>
+</mule>
