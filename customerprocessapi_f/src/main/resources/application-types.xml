@@ -1,0 +1,59 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="customerById" format="json">
+      <types:shape format="weave" example="examples/customer_by_id.json"><![CDATA[%dw 2.0
+
+type customerById = {|
+  customerID: String, 
+  name: String, 
+  phoneNumber: String, 
+  email: String, 
+  address: String, 
+  postal: Number {"typeId": "int"}, 
+  salesRepEmployeeNumber: String
+|} {"example": "{\\\"customerID\\\":\\\"C001\\\",\\\"name\\\":\\\"Joey Tribbiani\\\",\\\"phoneNumber\\\":\\\"987654321O\\\",\\\"email\\\":\\\"joey.tribbiani@gmail.com\\\",\\\"address\\\":\\\"New York, Down Town\\\",\\\"postal\\\":345210,\\\"salesRepEmployeeNumber\\\":\\\"E101\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="getCompliantByID" format="json">
+      <types:shape format="weave" example="examples/complaintByID.json"><![CDATA[%dw 2.0
+
+type getCompliantByID = {|
+  complaintID: String, 
+  description: String, 
+  status: String, 
+  customerID: String, 
+  orderDetails: {|
+    orderNumber: String, 
+    orderDate: String, 
+    amount: Number {"typeId": "int"}
+  |}, 
+  productDetails: {|
+    productCode: String, 
+    productName: String
+  |}
+|} {"example": "{\\\"complaintID\\\":\\\"CP101\\\",\\\"description\\\":\\\"Wrong Item Received\\\",\\\"status\\\":\\\"opened\\\",\\\"customerID\\\":\\\"C001\\\",\\\"orderDetails\\\":{\\\"orderNumber\\\":\\\"O101\\\",\\\"orderDate\\\":\\\"Feb 20,2021\\\",\\\"amount\\\":5000},\\\"productDetails\\\":{\\\"productCode\\\":\\\"P1001\\\",\\\"productName\\\":\\\"Motorola G8\\\"}}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#aeb8a929-9ac0-49b9-849e-7823801331cf">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="customerById"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#e5aa35bd-5f02-4ee2-9ef2-b70dec181eb4">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getCompliantByID"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

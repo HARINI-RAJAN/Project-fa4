@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:products-api="http://www.mulesoft.org/schema/mule/products-api"
+	xmlns:orders-api="http://www.mulesoft.org/schema/mule/orders-api"
+	xmlns:complaints-system-api="http://www.mulesoft.org/schema/mule/complaints-system-api" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:customers="http://www.mulesoft.org/schema/mule/customers" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/customers http://www.mulesoft.org/schema/mule/customers/current/mule-customers.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/complaints-system-api http://www.mulesoft.org/schema/mule/complaints-system-api/current/mule-complaints-system-api.xsd
+http://www.mulesoft.org/schema/mule/orders-api http://www.mulesoft.org/schema/mule/orders-api/current/mule-orders-api.xsd
+http://www.mulesoft.org/schema/mule/products-api http://www.mulesoft.org/schema/mule/products-api/current/mule-products-api.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<customers:config name="Customers_Config" doc:name="Customers Config" doc:id="7c242715-fb92-4611-9960-11d5f23eb7f5" property_host="customers-api-mule.us-e2.cloudhub.io" property_port="80" property_protocol="HTTP"/>
+	<complaints-system-api:config name="Complaints_System_API_Config" doc:name="Complaints System API Config" doc:id="a4fb0d11-a3ca-4707-b5ee-a26956ccb0ef" property_host="complaintssystem-api-mule.us-e2.cloudhub.io" property_port="80" property_protocol="HTTP" />
+	<orders-api:config name="Orders_API_Config" doc:name="Orders API Config" doc:id="5d85fd69-ee44-4fa6-86e5-a4f7b62209b5" property_host="orders-api-pro.us-e2.cloudhub.io" property_port="80" property_protocol="HTTP" />
+	<products-api:config name="Products_API_Config" doc:name="Products API Config" doc:id="b797597f-b07c-447d-821a-aa26294cc4ac" property_host="products-api-mule.us-e2.cloudhub.io" property_port="80" property_protocol="HTTP" />
+	<flow name="patchCustomerByIdFlow" doc:id="71335282-1bda-41c9-873c-62aeab0f8902" >
+		<customers:update-customer-by-cid_1 doc:name="Update customer by cid _ 1" doc:id="7076ed46-afd5-45a4-a872-a66802990a42" config-ref="Customers_Config" cid="#[attributes.uriParams.'customerID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="d00d3f7a-d4db-4239-8c9b-ca9413b24d8e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "The details for the customerId:" ++ vars.'customerID' ++ " was updated successfully" 
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getCustomerByIDFlow" doc:id="d44e33cc-1c11-40bd-a749-b6842cf6c493" >
+		<customers:get-customer-by-cid doc:name="Get customer by cid" doc:id="d017f0ae-a4f1-41d4-9e31-bf5e64f29170" config-ref="Customers_Config" cid="#[attributes.uriParams.'customerID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="aeb8a929-9ac0-49b9-849e-7823801331cf" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	customerID: payload.customerID,
+	name: payload.name,
+	phoneNumber: payload.phoneNumber,
+	email: payload.email,
+	address: payload.address,
+	postal: payload.postal,
+	salesRepEmployeeNumber: payload.salesRepEmployeeNumber
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postCustomerFlow" doc:id="bae3c6bf-7169-4aec-b0ef-1cb0f7fdf174" >
+		<customers:create-customer doc:name="Create customer" doc:id="1c170675-bc55-4ed1-9c1c-9b64fd237cd4" config-ref="Customers_Config"/>
+		<ee:transform doc:name="sucess message" doc:id="8414b506-2d17-42d8-8163-bde0060283eb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "customer added successfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="DeleteCustomerByIdFlow" doc:id="ff2f270c-3f31-4745-bbf6-0991878c6671" >
+		<customers:delete-customer-by-cid doc:name="Delete customer by cid" doc:id="32d7bb23-f9b2-4c41-8664-ec0b4118a5f5" config-ref="Customers_Config" cid="#[attributes.uriParams.'customerID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="df176604-60d3-47e5-8253-10d83cf5dadb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Customer details for the given Id: " ++ vars.'customerID' ++ " was deleted successsfully"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getAllComplaintsForIdFlow" doc:id="77123bbe-c14e-4c1d-8711-3b2a3b18f1af" >
+		<set-variable value="#[attributes.uriParams.'customerID']" doc:name="customerID" doc:id="f12e8c69-aa39-4141-a300-6362d28b3f0b" variableName="customerID"/>
+		<complaints-system-api:get-all-complaints doc:name="Get all complaints" doc:id="2d4a2650-91c3-4e18-9127-93dab1952d6c" config-ref="Complaints_System_API_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="460b7ba1-a320-4109-b40b-90c49b9bff2a" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map((payload, index) ->
+{
+    complaintID: payload.complaintID,
+    description: payload.description,
+    status: payload.status,
+    customerID: payload.customerID,
+    orderDetails: payload.orderNumber,
+    productDetails: payload.productCode
+}) filter($.customerID==vars.customerID)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postComplaintFlow" doc:id="804d66a7-6f7f-44fc-86cb-00c7911d418d" >
+		<complaints-system-api:post-complaint doc:name="Post Complaint" doc:id="7f464a3e-138b-4872-a6ef-1b30ed062f0d" config-ref="Complaints_System_API_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="985aa6a1-810c-43e4-996d-1c7928dd0467" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<sub-flow name="variable_Sub_Flow" doc:id="9e9524ed-a55a-43f4-a202-b89ff4d46767" >
+		<set-variable value="#[payload.orderNumber]" doc:name="orderNumber" doc:id="1c62c7fb-e3f6-4ec4-8419-6b8e53865a37" variableName="orderNumber"/>
+		<set-variable value="#[payload.productCode]" doc:name="productCode" doc:id="2f38b9c4-fc07-4655-af78-ba49db5e5faa" variableName="productCode"/>
+		<set-variable value="#[payload.customerID]" doc:name="customerID" doc:id="e19cd395-eea1-404e-9ee6-715d6f79c349" variableName="customerID"/>
+		<set-variable value="#[payload.complaintID]" doc:name="complaintID" doc:id="67c12bf0-985d-4403-acbb-43570bf48d12" variableName="complaintID"/>
+		<set-variable value="#[payload.description]" doc:name="description" doc:id="c4474e43-99e5-4ba4-9fb4-8b56fff5118d" variableName="description"/>
+		<set-variable value="#[payload.status]" doc:name="status" doc:id="7edaccaf-d872-4cb8-9b04-deda0dd4138c" variableName="status"/>
+	</sub-flow>
+	<flow name="getComplaintByIdFlow" doc:id="e882be89-82a4-4d1c-b89a-4d259a246497" >
+		<set-variable value="#[attributes.uriParams.'customerID']" doc:name="customerIDuri" doc:id="1c927999-11c1-4ee5-9764-824d2bc05f8c" variableName="customerIDuri"/>
+		<complaints-system-api:get-complaint-by-id doc:name="Get complaint by Id" doc:id="774f8db9-ddbb-4884-8af2-2521ec7aa99d" config-ref="Complaints_System_API_Config" complaint-id="#[attributes.uriParams.'complaintID']"/>
+		<flow-ref doc:name="variable_Sub_Flow" doc:id="905af0a1-d758-429b-801c-2178056544b6" name="variable_Sub_Flow"/>
+		<choice doc:name="Choice" doc:id="7750c59a-ce7e-4eff-80a6-02a19b82d17a" >
+			<when expression="#[vars.customerIDuri == vars.customerID]">
+				<scatter-gather doc:name="Scatter-Gather" doc:id="885f0fd5-56b2-4799-8978-119ea88db846">
+			<route>
+				<orders-api:get-order-details-for-given-id doc:name="Get order details for given ID" doc:id="72e46d24-1e8c-416c-93e6-2c05d6ccd78d" config-ref="Orders_API_Config" oid="#[vars.orderNumber]" />
+			</route>
+			<route>
+				<products-api:get-products-by-id doc:name="Get products by ID" doc:id="95bde99b-2ae3-4c9a-b99b-7605215a1baf" config-ref="Products_API_Config" pid="#[vars.productCode]" />
+			</route>
+		</scatter-gather>
+				<ee:transform doc:name="Transform Message" doc:id="e5aa35bd-5f02-4ee2-9ef2-b70dec181eb4">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	complaintID: vars.complaintID,
+	description: vars.description,
+	status: vars.status,
+	customerID: vars.customerID,	
+	orderDetails: {
+		orderNumber: payload."0".payload.orderNumber default "",
+		orderDate: payload."0".payload.orderDate as String {format: "dd/MMM/yyyy"},
+		amount: (payload."0".payload.priceEach default 0) * (payload."0".payload.quantityOrdered)
+	},
+	productDetails: {
+		productCode: payload."1".payload.ProductCode default "",
+		productName: payload."1".payload.Name
+	}
+	
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="033364b7-e5e3-4f22-9f89-c7030e0ed515" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Invalid customerID or ComplaintID"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="deleteComplaintFlow" doc:id="f1dbfea1-840a-4478-9220-f6d3e896c62e" >
+		<complaints-system-api:delete-complaint doc:name="Delete Complaint" doc:id="68831089-0c15-405c-9c4a-0564d6ecfdfd" config-ref="Complaints_System_API_Config" complaint-id="#[attributes.uriParams.'complaintID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="31fcc0c8-5ed7-4bdb-8e55-5f4529f9870c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="patchComplaintFlow" doc:id="f16efa73-fb75-4223-b7e9-27e4bbe63c47" >
+		<complaints-system-api:updates-complaint doc:name="Updates complaint" doc:id="46061ca0-1587-467d-b738-ebea82c39388" config-ref="Complaints_System_API_Config" complaint-id="#[attributes.uriParams.'complaintID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="5c7ffda2-3fd5-468f-ba3e-13539c0ae730" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getAllProductsFlow" doc:id="f0d217b3-1f98-4e73-b59a-a8048f6ac36c" >
+		<products-api:get-all-products doc:name="Get all products" doc:id="64abe787-4249-42b5-86fe-f3beb5a8f480" config-ref="Products_API_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="0d5477d7-4f5b-4b03-bb37-b39741b854cc" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getProductByIdFlow" doc:id="fdcdbcde-5471-48be-9df8-284d666f3fb8" >
+		<products-api:get-products-by-id doc:name="Get products by ID" doc:id="0bbb7316-43c0-4e09-9ff7-a6d583b619ec" config-ref="Products_API_Config" pid="#[attributes.uriParams.'PID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="3320896c-2426-493c-ad24-a34cb81e25ef" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="postOrderFlow" doc:id="ebe8e0c0-b8a9-4ddd-ad6a-811d29e23f2f" >
+		<orders-api:post-a-order-details doc:name="Post a order details" doc:id="fe74c313-d017-401b-9680-82632a3f7158" config-ref="Orders_API_Config"/>
+		<ee:transform doc:name="Transform Message" doc:id="02f3be3b-b771-405a-807a-e4e400bed8b8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="getOrderByIdFlow" doc:id="ae45eada-5a60-478d-ad93-dd05f06cb520" >
+		<orders-api:get-order-details-for-given-id doc:name="Get order details for given ID" doc:id="c1e1ea92-71a7-43f8-aa50-2c6c55d85ebc" config-ref="Orders_API_Config" oid="#[attributes.uriParams.'OID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="ce5295ac-7b71-42e3-8b48-db8c3d19e39d" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="deleteOrderByFlow" doc:id="2ad8611a-c98a-4651-b33d-05e32f45a364" >
+		<orders-api:delete-the-order-details-for-given-id doc:name="Delete the order details for given ID" doc:id="9f14b26e-54c7-4af9-88d0-97f7f172f76d" config-ref="Orders_API_Config" oid="#[attributes.uriParams.'OID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="5aaa09f2-3d70-44e8-a36b-accecdd4e05e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="patchOrderByIdFlow" doc:id="dd9d5c83-2b64-4224-90e4-f5cdcb909058" >
+		<orders-api:update-the-order-details doc:name="Update the order details" doc:id="5f52fb0c-7dd0-4916-8596-17822d238767" config-ref="Orders_API_Config" oid="#[attributes.uriParams.'OID']"/>
+		<ee:transform doc:name="Transform Message" doc:id="8a16a5b0-a528-4e57-bfc1-2729d7847334" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>

@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd  http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+    
+    <apikit:config name="customerprocessapi-config" api="resource::174fc794-5355-406d-9a8c-b0b3f53e20a1:customerprocessapi:1.0.6:raml:zip:customerprocessapi.raml" outboundHeadersMapName="outboundHeaders" httpStatusVarName="httpStatus" />
+    <flow name="customerprocessapi-main">
+        <http:listener config-ref="customerprocessapi-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:router config-ref="customerprocessapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:BAD_REQUEST">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Bad request"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">400</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:METHOD_NOT_ALLOWED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Method not allowed"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">405</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_ACCEPTABLE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not acceptable"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">406</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:UNSUPPORTED_MEDIA_TYPE">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Unsupported media type"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">415</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+            <on-error-propagate type="APIKIT:NOT_IMPLEMENTED">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Not Implemented"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">501</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="customerprocessapi-console">
+        <http:listener config-ref="customerprocessapi-httpListenerConfig" path="/console/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[vars.outboundHeaders default {}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <apikit:console config-ref="customerprocessapi-config" />
+        <error-handler>
+            <on-error-propagate type="APIKIT:NOT_FOUND">
+                <ee:transform xsi:schemaLocation="http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{message: "Resource not found"}]]></ee:set-payload>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="httpStatus">404</ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+    <flow name="delete:\customerprocess\customers\(customerID)\orders\(OID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+                <ee:set-variable variableName="OID">attributes.uriParams.'OID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="deleteOrderByFlow" doc:id="d3e7a66c-0fad-4066-931c-8ed1f9528609" name="deleteOrderByFlow" />
+    </flow>
+    <flow name="delete:\customerprocess\customers\(customerID)\complaints\(complaintID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+                <ee:set-variable variableName="complaintID">attributes.uriParams.'complaintID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="deleteComplaintFlow" doc:id="35bd2ca9-4e33-4bc8-96f9-7a2c9d34c176" name="deleteComplaintFlow" />
+    </flow>
+    <flow name="delete:\customerprocess\customers\(customerID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="DeleteCustomerByIdFlow" doc:id="6a4d004b-77a1-4fe5-8a7b-f43f889c4892" name="DeleteCustomerByIdFlow" />
+    </flow>
+    <flow name="patch:\customerprocess\customers\(customerID)\orders\(OID):application\json:customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+                <ee:set-variable variableName="OID">attributes.uriParams.'OID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="patchOrderByIdFlow" doc:id="89e1a185-144d-42da-a472-ec7abd1e8abc" name="patchOrderByIdFlow" />
+    </flow>
+    <flow name="patch:\customerprocess\customers\(customerID)\complaints\(complaintID):application\json:customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+                <ee:set-variable variableName="complaintID">attributes.uriParams.'complaintID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="patchComplaintFlow" doc:id="34619762-13b7-4ad0-a325-949a83712bfb" name="patchComplaintFlow" />
+    </flow>
+    <flow name="patch:\customerprocess\customers\(customerID):application\json:customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="patchCustomerByIdFlow" doc:id="358a8e65-cf7e-4259-afa5-a9a232ac9388" name="patchCustomerByIdFlow" />
+    </flow>
+    <flow name="get:\customerprocess\customers\(customerID)\orders\(OID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+                <ee:set-variable variableName="OID">attributes.uriParams.'OID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="getOrderByIdFlow" doc:id="4191afd9-4307-47dd-9d6f-2a5ea46fb3d7" name="getOrderByIdFlow" />
+    </flow>
+    <flow name="get:\customerprocess\customers\(customerID)\complaints\(complaintID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+                <ee:set-variable variableName="complaintID">attributes.uriParams.'complaintID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="getComplaintByIdFlow" doc:id="159834b3-6821-41a4-a61a-c1ae297f012b" name="getComplaintByIdFlow" />
+    </flow>
+    <flow name="get:\customerprocess\customers\(customerID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="getCustomerByIDFlow" doc:id="7965d16c-a647-4be8-98da-085af54b1498" name="getCustomerByIDFlow" />
+    </flow>
+    <flow name="post:\customerprocess\customers\(customerID)\complaints:application\json:customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="postComplaintFlow" doc:id="e23df028-acd1-4455-8eff-434d3b28265b" name="postComplaintFlow" />
+    </flow>
+    <flow name="post:\customerprocess\customers:application\json:customerprocessapi-config">
+        <flow-ref doc:name="postCustomerFlow" doc:id="1750c14a-9ee2-4d81-8256-d76ca0491504" name="postCustomerFlow" />
+    </flow>
+    <flow name="post:\customerprocess\customers\(customerID)\orders:application\json:customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <flow-ref doc:name="postOrderFlow" doc:id="a95f2904-d0ad-46ab-b8e3-53f595a0561d" name="postOrderFlow" />
+    </flow>
+    <flow name="get:\customerprocess\customers\(customerID)\complaints:customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="customerID">attributes.uriParams.'customerID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<flow-ref doc:name="getAllComplaintsForIdFlow" doc:id="30e2fcee-caf0-49e8-982b-596d20e32919" name="getAllComplaintsForIdFlow"/>
+    </flow>
+    <flow name="get:\customerprocess\products:customerprocessapi-config">
+		<flow-ref doc:name="getAllProductsFlow" doc:id="0a08db3b-d515-48ce-ab54-a8c2818a1834" name="getAllProductsFlow"/>
+    </flow>
+    <flow name="get:\customerprocess\products\(PID):customerprocessapi-config">
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="PID">attributes.uriParams.'PID'</ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+		<flow-ref doc:name="getProductByIdFlow" doc:id="6d80129b-08da-45cd-a2cc-1b39b17d12e2" name="getProductByIdFlow"/>
+    </flow>
+</mule>

@@ -1,0 +1,15 @@
+{
+  complaintID: "CP101",
+  description: "Wrong Item Received",
+  status: "opened",
+  customerID: "C001",
+  orderDetails: {
+    orderNumber: "O101",
+    orderDate: "Feb 20,2021",
+    amount: 5000
+  },
+  productDetails: {
+    productCode: "P1001",
+    productName: "Motorola G8"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  customerID: "C001",
+  name: "Joey Tribbiani",
+  phoneNumber: "987654321O",
+  email: "joey.tribbiani@gmail.com",
+  address: "New York, Down Town",
+  postal: 345210,
+  salesRepEmployeeNumber: "E101"
+}
