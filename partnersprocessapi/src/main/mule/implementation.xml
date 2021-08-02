@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="Get-all-orders-flow" doc:id="378c32b9-0d99-49d2-a87f-0da74b64ae3d" >
+		<http:request method="GET" doc:name="Fetches all the order details" doc:id="395b3152-e8a8-4d2f-a8e0-05e30a2d2f4a" url="http://orders-fa4-api.us-e2.cloudhub.io/api/orders"/>
+		<ee:transform doc:name="Transform Message" doc:id="893c9c59-563e-4348-9d39-80f49cff352f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get-all-payments-flow" doc:id="736d79df-bb81-4091-adfc-efd9fcb831e5" >
+		<http:request method="GET" doc:name="Fetches all the payment details" doc:id="1f77f920-6eac-48dc-ba84-03313c1d2d2f" url="http://paymentsapifa4.us-e2.cloudhub.io/api/payments"/>
+		<ee:transform doc:name="Transform Message" doc:id="b6c3aa3b-3e57-47a2-afc6-f0f0015f3265" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get-a-payment-by-id-flow" doc:id="88518062-8c71-440e-83e9-00a06c86effc" >
+		<http:request method="GET" doc:name="Fetches a payment detail by cutomerID" doc:id="daf959c0-516a-44aa-a154-8faf4a42ce2b" url="http://paymentsapifa4.us-e2.cloudhub.io/api/payments/{customerId}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	customerId : attributes.uriParams.'customerID'
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="7409969d-bdf9-4824-8862-119aa2fc3fbb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get-a-order-by-ID-flow" doc:id="8145125f-b212-46ab-86ba-91fc466c563c" >
+		<http:request method="GET" doc:name="Fetches  an order by OrderID" doc:id="d45de6e0-08e3-42da-826a-765a0dd00dc2" url="http://orders-fa4-api.us-e2.cloudhub.io/api/orders/{OID}">
+			<http:uri-params ><![CDATA[#[output application/java
+---
+{
+	OID : attributes.uriParams.'orderID'
+}]]]></http:uri-params>
+		</http:request>
+		<ee:transform doc:name="Transform Message" doc:id="b6ac6a3a-8fd7-49df-bd8d-d8c87f1e99b9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
