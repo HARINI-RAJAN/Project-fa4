@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="orders" format="json">
+      <types:shape format="weave" example="examples/orders.json"><![CDATA[%dw 2.0
+
+type orders = Array<{|  orderNumber: String,   orderDate: String,   shippedDate: String,   orderStatus: String,   customerID: String,   quantityOrdered: Number {"typeId": "int"},   priceEach: Number {"typeId": "int"}|}> {"example": "[{\\\"orderNumber\\\":\\\"O101\\\",\\\"orderDate\\\":\\\"20\\/10\\/2020\\\",\\\"shippedDate\\\":\\\"24\\/10\\/2020\\\",\\\"orderStatus\\\":\\\"Shipped\\\",\\\"customerID\\\":\\\"C001\\\",\\\"quantityOrdered\\\":2,\\\"priceEach\\\":200},{\\\"orderNumber\\\":\\\"O102\\\",\\\"orderDate\\\":\\\"04\\/01\\/2020\\\",\\\"shippedDate\\\":\\\"05\\/01\\/2020\\\",\\\"orderStatus\\\":\\\"Shipped\\\",\\\"customerID\\\":\\\"C002\\\",\\\"quantityOrdered\\\":5,\\\"priceEach\\\":3000}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="order" format="json">
+      <types:shape format="weave" example="examples/order-1.json"><![CDATA[%dw 2.0
+
+type order = {|
+  orderNumber: String, 
+  orderDate: String, 
+  shippedDate: String, 
+  orderStatus: String, 
+  customerID: String, 
+  quantityOrdered: Number {"typeId": "int"}, 
+  priceEach: Number {"typeId": "int"}
+|} {"example": "{\\\"orderNumber\\\":\\\"O101\\\",\\\"orderDate\\\":\\\"20\\/10\\/2020\\\",\\\"shippedDate\\\":\\\"24\\/10\\/2020\\\",\\\"orderStatus\\\":\\\"Shipped\\\",\\\"customerID\\\":\\\"C001\\\",\\\"quantityOrdered\\\":2,\\\"priceEach\\\":200}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#dc0387ea-461d-484f-b22a-4db635993bae">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="orders"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#92e25d33-a8a9-42a2-910d-49a8be11e66b">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="order"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
