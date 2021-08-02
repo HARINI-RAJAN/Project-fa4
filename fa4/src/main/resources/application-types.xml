@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="getall" format="json">
+      <types:shape format="weave" example="examples/getallprodmetadata.txt"><![CDATA[%dw 2.0
+
+type getall = Array<{|  ProductCode: String,   Vendor: String,   Name: String,   Description: String,   StockAvailable: Number {"typeId": "int"},   Price: Number {"typeId": "double"}|}> {"example": "[{\\\"ProductCode\\\":\\\"P1001\\\",\\\"Vendor\\\":\\\"VIVO\\\",\\\"Name\\\":\\\"VIVO Y72 5G\\\",\\\"Description\\\":\\\"8GB+4GB extended RAM, 5000mAH battery\\\",\\\"StockAvailable\\\":12,\\\"Price\\\":23290.0},{\\\"ProductCode\\\":\\\"P1002\\\",\\\"Vendor\\\":\\\"VIVO\\\",\\\"Name\\\":\\\"VIVO V21 e\\\",\\\"Description\\\":\\\"8GB+3GB extended RAM, 5000mAH battery\\\",\\\"StockAvailable\\\":10,\\\"Price\\\":28890.5}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="getbyid" format="json">
+      <types:shape format="weave" example="examples/getbyidmetadata.txt"><![CDATA[%dw 2.0
+
+type getbyid = {|
+  ProductCode: String, 
+  Vendor: String, 
+  Name: String, 
+  Description: String, 
+  StockAvailable: Number {"typeId": "int"}, 
+  Price: Number {"typeId": "double"}
+|} {"example": "{\\\"ProductCode\\\":\\\"P1001\\\",\\\"Vendor\\\":\\\"VIVO\\\",\\\"Name\\\":\\\"VIVO Y72 5G\\\",\\\"Description\\\":\\\"8GB+4GB extended RAM, 5000mAH battery\\\",\\\"StockAvailable\\\":12,\\\"Price\\\":23290.0}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#18f3af5b-822d-4c03-8473-e71158ea0308">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getall"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#6011168a-4454-4993-bf32-8427c3e2e5a0">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getbyid"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>
