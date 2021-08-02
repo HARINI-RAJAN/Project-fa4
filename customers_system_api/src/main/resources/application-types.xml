@@ -1,0 +1,45 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="getall" format="json">
+      <types:shape format="weave" example="examples/p_customer_system_get_all.json"><![CDATA[%dw 2.0
+
+type getall = Array<{|  customerID: String,   name: String,   phoneNumber: String,   email: String,   address: String,   postal: Number {"typeId": "int"},   salesRepEmployeeNumber: String|}> {"example": "[{\\\"customerID\\\":\\\"C001\\\",\\\"name\\\":\\\"Joey Tribbiani\\\",\\\"phoneNumber\\\":\\\"987654321O\\\",\\\"email\\\":\\\"joey.tribbiani@gmail.com\\\",\\\"address\\\":\\\"New York, Down Town\\\",\\\"postal\\\":345210,\\\"salesRepEmployeeNumber\\\":\\\"E101\\\"},{\\\"customerID\\\":\\\"C002\\\",\\\"name\\\":\\\"Chandler Bing\\\",\\\"phoneNumber\\\":\\\"987654321O\\\",\\\"email\\\":\\\"chandler.bing@gmail.com\\\",\\\"address\\\":\\\"New York, Down Town\\\",\\\"postal\\\":345210,\\\"salesRepEmployeeNumber\\\":\\\"E102\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="get_by_ID" format="json">
+      <types:shape format="weave" example="examples/p_customer_system_get_BY_ID.json"><![CDATA[%dw 2.0
+
+type get_by_ID = {|
+  customerID: String, 
+  name: String, 
+  phoneNumber: String, 
+  email: String, 
+  address: String, 
+  postal: Number {"typeId": "int"}, 
+  salesRepEmployeeNumber: String
+|} {"example": "{\\\"customerID\\\":\\\"C001\\\",\\\"name\\\":\\\"Joey Tribbiani\\\",\\\"phoneNumber\\\":\\\"987654321O\\\",\\\"email\\\":\\\"joey.tribbiani@gmail.com\\\",\\\"address\\\":\\\"New York, Down Town\\\",\\\"postal\\\":345210,\\\"salesRepEmployeeNumber\\\":\\\"E101\\\"}"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#6d2ed4a7-e690-4769-89a0-66cdb17eac5f">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getall"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#f2d30d80-71e9-4958-a29c-c5df38a548cd">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="get_by_ID"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

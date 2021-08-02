@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    <http:listener-config name="customers-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
+    </http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="df8a7db0-a5f0-4ff3-b0f5-3daf3b0fa0ee" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<configuration-properties doc:name="Configuration properties" doc:id="3bd83ff4-b131-48ad-b3d5-c7879101450e" file="customers.yaml" />
+	<configuration doc:name="Configuration" doc:id="dceab67e-05f2-439a-b560-d459cfed74af" defaultErrorHandler-ref="customer_globalError_Handler" />
+	<error-handler name="customer_globalError_Handler" doc:id="672ac12c-3e94-42a7-a04d-2b546b5be7f1" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b0c40e6a-3f34-4d6a-8535-9171bb02892d" type="DB:BAD_SQL_SYNTAX">
+			<set-payload value='#["Mistake exists in SQL syntax"]' doc:name="Set Payload" doc:id="43c90b9d-3dbd-419f-92c1-74e9a1c2b090" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d5f85ca7-4beb-4522-b21d-68bb7b3070a8" type="DB:CONNECTIVITY">
+			<set-payload value='#["Database connectivity failed"]' doc:name="Set Payload" doc:id="5b36ebc7-a9e3-47e2-a5a2-81e9fddbb9e8" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9e994dfb-a393-4258-9d43-e92e898f800d" type="DB:QUERY_EXECUTION">
+			<set-payload value='#["Query execution failed"]' doc:name="Set Payload" doc:id="495810c8-3f80-4419-aa90-7dba688b6471" />
+		</on-error-continue>
+	</error-handler>
+	
+	
+	
+	
+	
+	
+	
+	
+</mule>

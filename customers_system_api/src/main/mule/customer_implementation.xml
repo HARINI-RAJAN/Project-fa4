@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<sub-flow name="variableSubFlow" doc:id="24ba5c7d-6604-4174-9c8e-3ef0de575681" >
+		<set-variable value="#[attributes.uriParams.'CID']" doc:name="customerID" doc:id="7aa96191-b7af-432c-a4bb-b9eda8af92a2" variableName="customerID"/>
+		<set-variable value="#[payload.name]" doc:name="name" doc:id="22ae7df6-5a85-450e-a57d-adc36c50fad2" variableName="name" />
+		<set-variable value="#[payload.phoneNumber]" doc:name="phoneNumber" doc:id="2a9290ae-9412-48e4-b5df-e3a653b5493e" variableName="phoneNumber" />
+		<set-variable value="#[payload.email]" doc:name="email" doc:id="583c3d33-f34a-48da-941c-dec096124b83" variableName="email" />
+		<set-variable value="#[payload.address]" doc:name="address" doc:id="9a9fcfb2-c28e-4f77-8eae-c16d03d13a83" variableName="address" />
+		<set-variable value="#[payload.postal]" doc:name="postal" doc:id="78b523ce-4d29-415b-8187-50d58624499b" variableName="postal" />
+		<set-variable value="#[payload.salesRepEmployeeNumber]" doc:name="salesRepEmployeeNumber" doc:id="3df8e761-1c50-4181-a353-2bb00ed9764b" variableName="salesRepEmployeeNumber" />
+	</sub-flow>
+	<flow name="Get_alll_flow" doc:id="c6b35c7e-1435-4344-af7e-e9dde7427758" >
+		<db:select doc:id="03108542-7de5-4107-a7b6-83d98e9f83b6" config-ref="Database_Config" doc:name="Retrieves the Customer data as object from Database">
+			<db:sql ><![CDATA[select * from customers ]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="6d2ed4a7-e690-4769-89a0-66cdb17eac5f" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	customerID: payload01.customerID,
+	name: payload01.name default "",
+	phoneNumber: payload01.phoneNumber default "",
+	email: payload01.email default "",
+	address: payload01.address default "",
+	postal: payload01.postal default 0,
+	salesRepEmployeeNumber: payload01.salesRepEmployeeNumber default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="get_by_ID-Flow" doc:id="a9c730f9-0f8f-4be0-a802-8e667feb24be" >
+		<db:query-single doc:name="Retrieves the Customer data as object from Database by ID" doc:id="d9632d1d-08e7-4cb2-bbb9-1462d7b1938f" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from customers where customerID = :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'id': vars.CID
+}]]]></db:input-parameters>
+		</db:query-single>
+		<choice doc:name="Choice" doc:id="c8917530-a0e3-4124-b527-3aab3b317c2e" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="Transform Message" doc:id="f2d30d80-71e9-4958-a29c-c5df38a548cd">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	customerID: payload.customerID,
+	name: payload.name default "",
+	phoneNumber: payload.phoneNumber default "",
+	email: payload.email default "",
+	address: payload.address default "",
+	postal: payload.postal default 0,
+	salesRepEmployeeNumber: payload.salesRepEmployeeNumber default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload value='#["CustomerDetails not found for the given ID"]' doc:name="Set Payload" doc:id="7fa0a248-2e42-4707-b08f-098e3cbef022" />
+				<set-variable value="500" doc:name="httpStatus" doc:id="09eb88c3-5d16-4052-92d0-0c2b5d034df4" variableName="httpStatus"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="post_flow" doc:id="9c241549-cf33-4984-8fbb-82ce7d6244d1" >
+		<flow-ref doc:name="Flow Reference" doc:id="5f080947-88ec-480f-9a8f-37d1779ff57e" name="variableSubFlow" />
+		<db:query-single doc:name="Fetches the maximum CustomerID " doc:id="84d20111-e4e6-43ff-bb00-33a11d8cad39" config-ref="Database_Config">
+			<db:sql ><![CDATA[select max(customerID) from customers]]></db:sql>
+		</db:query-single>
+		<ee:transform doc:name="Transform Message" doc:id="1311c5e8-a3ff-4223-8aef-3d54b277b594" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'id': "C0" ++ ((payload.'max(customerID)'[2 to 3] as Number) + 1)
+}
+
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Insert new Object for customer into the database" doc:id="9db42d6b-bef8-4c4d-8f24-99915ae6144b" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into customers(customerID, name, phoneNumber, email, address, postal,salesRepEmployeeNumber)
+values(:cid, :name, :phone, :mail, :address, :pincode, :empNo)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'cid': payload.id,
+	'name': vars.name,
+	'phone': vars.phoneNumber,
+	'mail': vars.email,
+	'address': vars.address,
+	'pincode': vars.postal,
+	'empNo': vars.salesRepEmployeeNumber
+}]]]></db:input-parameters>
+		</db:insert>
+		<db:query-single doc:name="Fetches the new CustomerID for which the object is created" doc:id="366b1ffc-52c7-442a-8584-1840fe9b5187" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select max(customerID) from customers]]></db:sql>
+		</db:query-single>
+		<ee:transform doc:name="Transform Message" doc:id="f938a005-5616-4689-9ede-4914e60e4a3e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Customer created with ID: " ++ (payload."max(customerID)" as String default "")
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="Patch_flow" doc:id="2d59d609-a1b2-4a4b-8c9c-b385839a8193" >
+		<flow-ref doc:name="Refers to variableSubFlow" doc:id="21f72a48-1a97-4076-b143-77af77e4a5dd" name="variableSubFlow"/>
+		<db:update doc:name="Updates the specified colums for the given ID with the input provided" doc:id="4cf5ddc9-a48d-4f05-b5aa-dc6ee4a796f1" config-ref="Database_Config">
+			<db:sql ><![CDATA[update customers set email = :mail, address = :address, postal = :pincode where customerID = :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'id': vars.customerID,
+	'mail': vars.email,
+	'address': vars.address,
+	'pincode': vars.postal
+}]]]></db:input-parameters>
+		</db:update>
+		<choice doc:name="Choice" doc:id="d1e97566-113c-4118-a4d6-de729ad58d42" >
+			<when expression="#[payload.affectedRows &gt; 0]">
+				<ee:transform doc:name="Transform Message" doc:id="44a18b55-6802-4c11-b516-e4cd7e0baad0">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Details updated for customer with iD: " ++ vars.customerID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload value='#["CustomerDetails not found for the given ID"]' doc:name="Set Payload" doc:id="edf22140-72f4-4346-b085-04cbad7c420a" />
+				<set-variable value="500" doc:name="httpStatus" doc:id="0e9d53f2-73ed-4b48-af77-4d1c9b9a0c44" variableName="httpStatus" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="DeleteFlow" doc:id="14afd432-ffc7-409c-95d8-447f899de481" >
+		<set-variable value="#[attributes.uriParams.'CID']" doc:name="customerID" doc:id="1d83b65e-02a4-4737-9c20-222e83933b5e" variableName="customerID"/>
+		<db:query-single doc:name="Copy_of_Retrieves the Customer data as object from Database by ID" doc:id="9b5f27cd-1fae-4821-8d39-a0fd5da5040c" config-ref="Database_Config">
+			<db:sql><![CDATA[select * from customers where customerID = :id]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	'id': vars.CID
+}]]]></db:input-parameters>
+		</db:query-single>
+		<choice doc:name="Choice" doc:id="50629ff0-ebd0-4fd9-adfe-0d90b4d4924a" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<db:delete doc:name="Delete" doc:id="fe4ea835-3b7b-4394-b67f-e18106618429" config-ref="Database_Config">
+			<db:sql><![CDATA[delete from customers where customerID = :id]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	'id': vars.customerID
+}]]]></db:input-parameters>
+		</db:delete>
+				<ee:transform doc:name="Transform Message" doc:id="0e6fa5b9-a332-443e-87bc-5785046d8d3d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Deleted the customer object for the ID: " ++ vars.customerID
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload value="ID doesn't exist" doc:name="Set Payload" doc:id="b1974992-501e-4724-8447-eb3e793a1930" />
+				<set-variable value="500" doc:name="httpStatus" doc:id="0d567f18-e2fd-4816-a056-4c763b2b1e9a" variableName="httpStatus" />
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="Put_Flow" doc:id="e25ea5b7-05b3-48af-8d5c-1f763486e93e" >
+		<flow-ref doc:name="variableSubFlow" doc:id="b1be9810-772c-48e6-8b3f-2dffe8bd4d94" name="variableSubFlow"/>
+		<db:query-single doc:name="Retrieves the Customer data as object from Database by ID" doc:id="36072885-f2ac-4ecd-bdb3-6109beef0bf5" config-ref="Database_Config" >
+			<db:sql ><![CDATA[select * from customers where customerID = :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'id': vars.CID
+}]]]></db:input-parameters>
+		</db:query-single>
+		<choice doc:name="Checks if the given ID exists or not" doc:id="b62d14ca-f2b0-4171-8581-50be873baa51" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<db:update doc:name="Update" doc:id="4c4ea873-964c-4b5a-aa1f-2fb3b4f41c67" config-ref="Database_Config">
+					<db:sql ><![CDATA[update customers set name = :name, phoneNumber = :phone, email = :mail, address = :address, postal = :pincode, salesRepEmployeeNumber = :empno 
+where customerID = :id ]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	'id': vars.customerID,
+	'name': vars.name,
+	'phone': vars.phoneNumber,
+	'mail': vars.email,
+	'address': vars.address,
+	'pincode': vars.postal,
+	'empno': vars.salesRepEmployeeNumber
+}]]]></db:input-parameters>
+				</db:update>
+				<ee:transform doc:name="Transform Message" doc:id="c37b4a42-aaf6-4b60-bcdb-07a8b5fa9ef0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	message: "Data replaced for existing data with input data for the ID: " ++ vars.customerID
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<set-payload value="#[&quot;ID doesn't exist&quot;]" doc:name="Set Payload" doc:id="3a9c73e1-12a9-4810-9669-8e12cf8b9dc0" />
+				<set-variable value="500" doc:name="httpStatus" doc:id="60fc9b39-dbab-42ce-8856-25304ebc2ad4" variableName="httpStatus" />
+			</otherwise>
+		</choice>
+	</flow>
+</mule>
