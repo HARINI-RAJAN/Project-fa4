@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<configuration-properties doc:name="Configuration properties" doc:id="58297938-6b9e-4afc-af47-62dfed92c6e7" file="orders.yaml" />
+	<http:listener-config name="orders-api-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}" />
+    </http:listener-config>
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="226819f9-56fc-4ceb-ba9f-38905eb847f8" >
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	<configuration doc:name="Configuration" doc:id="a090f0ef-50c6-4676-b2fe-fc2f8dd83589" defaultErrorHandler-ref="globalError_Handler" />
+	<error-handler name="globalError_Handler" doc:id="79318e72-ec2d-4cb1-b86b-9f4be7fbf5c5" >
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="39addeed-c757-485d-8ee8-d839da596a4b" type="DB:BAD_SQL_SYNTAX">
+			<set-payload value="Check your syntax" doc:name="Set Payload" doc:id="8f85ff5d-af80-4d2d-a5b9-4c459048fd81" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="04ce26ba-74ed-42a2-9b95-ed3209ac57e6" type="DB:CONNECTIVITY">
+			<set-payload value="connectivity problem" doc:name="Set Payload" doc:id="4a1dedce-c199-472a-b0a8-6c969f1c9c85" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="67b9f2f1-9df9-44fd-b5fe-95157ea2a8c9" type="DB:QUERY_EXECUTION">
+			<set-payload value="check your query" doc:name="Set Payload" doc:id="99aae0ec-6d2c-4589-b313-ef5294305636" />
+		</on-error-continue>
+		<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2c78843a-1bfe-49ca-b919-6ae34bd4580c" type="ANY">
+			<set-payload value="Error occured" doc:name="Set Payload" doc:id="309c8b2f-794e-4df8-b5aa-81d790c6056f" />
+		</on-error-continue>
+	</error-handler>
+</mule>
