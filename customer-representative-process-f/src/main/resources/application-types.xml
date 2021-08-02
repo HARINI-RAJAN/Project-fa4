@@ -1,0 +1,39 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="complaints" format="json">
+      <types:shape format="weave" example="examples/allcomplaints-3.json"><![CDATA[%dw 2.0
+
+type complaints = Array<{|  complaintID: String,   description: String,   status: String,   customerID: String,   orderDetails: {|    orderID: String,     orderDate: String,     amount: Number {"typeId": "int"}  |},   productDetails: {|    productCode: String,     productName: String  |}|}> {"example": "[{\\\"complaintID\\\":\\\"CP101\\\",\\\"description\\\":\\\"Wrong Item Received\\\",\\\"status\\\":\\\"opened\\\",\\\"customerID\\\":\\\"C001\\\",\\\"orderDetails\\\":{\\\"orderID\\\":\\\"O101\\\",\\\"orderDate\\\":\\\"Feb 20,2021\\\",\\\"amount\\\":5000},\\\"productDetails\\\":{\\\"productCode\\\":\\\"P1001\\\",\\\"productName\\\":\\\"Motorola G8\\\"}},{\\\"complaintID\\\":\\\"CP102\\\",\\\"description\\\":\\\"Defected Item Received\\\",\\\"status\\\":\\\"Closed\\\",\\\"customerID\\\":\\\"C002\\\",\\\"orderDetails\\\":{\\\"orderID\\\":\\\"O102\\\",\\\"orderDate\\\":\\\"Mar 30,2020\\\",\\\"amount\\\":2000},\\\"productDetails\\\":{\\\"productCode\\\":\\\"P1002\\\",\\\"productName\\\":\\\"Samsung Galaxy\\\"}}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#b751a73d-4f2b-4770-a4e0-132153b13ef2">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="complaints"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#fb8e6dc0-0a26-4b07-976e-9ebf5ef3880b">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="complaints"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#0d99aba5-40c2-418e-bfe6-2772fe2aaf04">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="complaints"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

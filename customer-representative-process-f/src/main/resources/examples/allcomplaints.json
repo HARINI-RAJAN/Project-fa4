@@ -1,0 +1,18 @@
+[
+  {
+    complaintID: "CP101",
+    description: "Wrong Item Received",
+    status: "Opened",
+    customerID: "C001",
+    orderNumber: "O101",
+    productCode: "P1001"
+  }, 
+  {
+    complaintID: "CP102",
+    description: "Wrong Item Received",
+    status: "Opened",
+    customerID: "C002",
+    orderNumber: "O101",
+    productCode: "P1001"
+  }
+]
