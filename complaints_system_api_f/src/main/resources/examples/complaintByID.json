@@ -1,0 +1,8 @@
+{
+  complaintID: "CP101",
+  description: "Wrong Item Received",
+  status: "Opened",
+  customerID: "C001",
+  orderNumber: "O101",
+  productCode: "P100"
+}

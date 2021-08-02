@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<types:mule xmlns:types="http://www.mulesoft.org/schema/mule/types">
+  <types:catalog>
+    <types:type name="getComplaintbyId" format="json">
+      <types:shape format="weave" example="examples/complaintByID.json"><![CDATA[%dw 2.0
+
+type getComplaintbyId = {|
+  complaintID: String, 
+  description: String, 
+  status: String, 
+  customerID: String, 
+  orderNumber: String, 
+  productCode: String
+|} {"example": "{\\\"complaintID\\\":\\\"CP101\\\",\\\"description\\\":\\\"Wrong Item Received\\\",\\\"status\\\":\\\"Opened\\\",\\\"customerID\\\":\\\"C001\\\",\\\"orderNumber\\\":\\\"O101\\\",\\\"productCode\\\":\\\"P100\\\"}"}
+
+]]></types:shape>
+    </types:type>
+    <types:type name="getAllComplaints" format="json">
+      <types:shape format="weave" example="examples/allComplaints.json"><![CDATA[%dw 2.0
+
+type getAllComplaints = Array<{|  complaintID: String,   description: String,   status: String,   customerID: String,   orderNumber: String,   productCode: String|}> {"example": "[{\\\"complaintID\\\":\\\"CP101\\\",\\\"description\\\":\\\"Wrong Item Received\\\",\\\"status\\\":\\\"Opened\\\",\\\"customerID\\\":\\\"C001\\\",\\\"orderNumber\\\":\\\"O101\\\",\\\"productCode\\\":\\\"P1001\\\"},{\\\"complaintID\\\":\\\"CP102\\\",\\\"description\\\":\\\"Wrong Item Received\\\",\\\"status\\\":\\\"Opened\\\",\\\"customerID\\\":\\\"C002\\\",\\\"orderNumber\\\":\\\"O101\\\",\\\"productCode\\\":\\\"P1001\\\"}]"}
+
+]]></types:shape>
+    </types:type>
+  </types:catalog>
+  <types:enrichment select="#53b785fb-5497-4311-be42-1b9507091198">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getComplaintbyId"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+  <types:enrichment select="#9ef7a3bc-9768-4ea9-8e32-26f6c296aaec">
+    <types:processor-declaration>
+      <types:output-event>
+        <types:message>
+          <types:payload type="getAllComplaints"/>
+        </types:message>
+      </types:output-event>
+    </types:processor-declaration>
+  </types:enrichment>
+</types:mule>

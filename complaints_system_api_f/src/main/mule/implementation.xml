@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	
+	<sub-flow name="variable-sub-flow" doc:id="94d2af8e-c617-4ae7-bbe6-6b4d661ce3e3" >
+		<set-variable value="#[payload.description]" doc:name="description" doc:id="123fa37f-b83b-48b8-b993-01ad10d1bbfa" variableName="description"/>
+		<set-variable value="#[payload.status]" doc:name="status" doc:id="2821f5d1-899c-4c37-9807-b6b2ddccaecb" variableName="status"/>
+		<set-variable value="#[payload.customerID]" doc:name="customerID" doc:id="83725dfd-3f44-4800-914c-0bbf031c94be" variableName="customerID"/>
+		<set-variable value="#[payload.orderNumber]" doc:name="orderNumber" doc:id="60f18fcc-0899-4834-8028-8377837dcf36" variableName="orderNumber"/>
+		<set-variable value="#[payload.productCode]" doc:name="productCode" doc:id="21fa24f4-f368-4c78-b429-0104fe3538c5" variableName="productCode"/>
+	</sub-flow>
+	<flow name="patch-a-complaint-flow" doc:id="8a1ca0bd-1cfb-49c7-9b77-128a7732b62a" >
+		<flow-ref doc:name="variable-sub-flow" doc:id="a04feb75-1a5d-4c08-824e-8bcb16ae2c0a" name="variable-sub-flow"/>
+		<choice doc:name="Choice" doc:id="9978ccae-4fc6-4d74-9d10-e87d3e2adbeb" >
+			<when expression="#[sizeOf(payload)==1]">
+				<db:update doc:name="updates Status of a complaint" doc:id="fbf6df9b-2f98-4a7a-8d38-1226a3758394" config-ref="Database_Config">
+					<db:sql ><![CDATA[update complaints set status= :status where CPID= :id]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	'id': attributes.uriParams.'complaintId',
+	'status': vars.status
+}]]]></db:input-parameters>
+				</db:update>
+				<choice doc:name="Choice" doc:id="8bd8b682-ce90-402d-8e8f-5bb31609b254" >
+					<when expression="#[(payload.affectedRows)&gt;0]">
+						<ee:transform doc:name="success message for status update" doc:id="efdaeaa2-6ef8-414f-8b1b-e8714619766d" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Complaint status updated for ID: " ++(vars.'complaintID') as String
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Error message" doc:id="70f1e035-7127-4a35-9bfe-1a07b5891b22" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+"Message": "Couldn't find complaint details for given ID"	
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value="#[500]" doc:name="httpStatus" doc:id="57d4506c-f9f9-4c32-8762-853652961cd3" variableName="httpStatus"/>
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise >
+				<db:update doc:name="Updates Complaint" doc:id="9b91d813-5603-4b3a-baa2-7f02d3181a75" config-ref="Database_Config">
+					<db:sql ><![CDATA[update complaints set description= :description,orderNumber= :orderNumber,productCode= :productCode where CPID= :complaintID]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	description: vars.description,
+	orderNumber: vars.orderNumber,
+	productCode: vars.productCode,
+	complaintID: attributes.uriParams.'complaintId'
+}]]]></db:input-parameters>
+				</db:update>
+				<choice doc:name="Choice" doc:id="ec1baef3-b41f-454b-8846-ae4db9ff0600" >
+					<when expression="#[(payload.affectedRows)&gt;0]">
+						<ee:transform doc:name="success message for updates" doc:id="68e2f92a-530f-426c-83c8-ba989683e042" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Complaint details updated for ID: " ++(vars.'complaintID') as String
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Error message" doc:id="e7d73a27-1597-4c28-822a-167998671393" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Couldn't find complaint details for given ID"	
+}]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value="#[500]" doc:name="httpStatus" doc:id="24f6a414-d404-4810-b352-d9c52c9432b2" variableName="httpStatus"/>
+					</otherwise>
+				</choice>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="delete-a-complaint-by-Id" doc:id="1c3f9cf4-4a7f-4a95-adbd-3f99c687e36a" >
+		<db:delete doc:name="Delete a complaint by Id" doc:id="4ec6e75f-3448-4fbb-a76f-3272888c4a1b" config-ref="Database_Config">
+			<db:sql><![CDATA[delete from complaints where CPID= :id]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	'id': attributes.uriParams.'complaintId'
+}]]]></db:input-parameters>
+		</db:delete>
+		<choice doc:name="Choice" doc:id="e0640c63-c999-482d-a3ff-abde644dacdf" >
+			<when expression="#[payload==1]">
+				<ee:transform doc:name="success Message" doc:id="3be2aba3-f6f5-441b-837e-cd36c2c73878" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Complaint detail deleted for ID: " ++ (vars.'complaintID') as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Error message" doc:id="b8e84d94-9de6-410c-8b9a-d9503e46df17" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Couldn't find complaint details for given ID: " ++ (vars.'complaintID') as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[500]" doc:name="httpStatus" doc:id="131b3ae7-0afd-4394-86ea-9dcf8ee70d3e" variableName="httpStatus"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="post-a-complaint-flow" doc:id="bddf445e-b920-46de-a2bf-b6644d18282b" >
+		<flow-ref doc:name="variable-sub-flow" doc:id="de95a7b4-4ead-4db4-84f5-84a6652ff80c" name="variable-sub-flow"/>
+		<db:query-single doc:name="select maximum value of Complaint ID" doc:id="b83d2fa4-eb43-4f1a-be66-a6e338db9fd7" config-ref="Database_Config">
+			<db:sql ><![CDATA[select max(CPID) from complaints]]></db:sql>
+		</db:query-single>
+		<ee:transform doc:name="Transform Message" doc:id="e2276a92-9848-43c0-b539-eb0482d12a11" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'CPID':  "CP" ++((payload."max(CPID)"[2 to 4] as Number)+1),
+	'status': "Opened"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:insert doc:name="Add new complaint" doc:id="c7996e6b-281f-4ce1-9861-ef5977a7c803" config-ref="Database_Config">
+			<db:sql ><![CDATA[insert into complaints(CPID,description,status,orderNumber,productCode,customerID)
+values(:id, :description, :status, :orderNo, :productCode, :customerID)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'id': payload.CPID,
+	'description': vars.description,
+	'status': payload.status,
+	'orderNo': vars.orderNumber,
+	'productCode': vars.productCode,
+	'customerID': vars.customerID
+	
+}]]]></db:input-parameters>
+		</db:insert>
+		<db:query-single doc:name="select maximum value of complaint ID" doc:id="48ff8ced-8bdd-45de-a7b0-b85c849a7481" config-ref="Database_Config">
+			<db:sql ><![CDATA[select max(CPID) from complaints]]></db:sql>
+		</db:query-single>
+		<ee:transform doc:name="Transform Message" doc:id="6b8e9be2-c551-4cdc-98ad-3a0a43698641" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Complaint added for ID: " ++ (payload."max(CPID)") as String
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow doc:id="0bd7898e-77fa-41c3-98bb-10138513f39d" name="get-a-complaint-by-Id">
+		<db:query-single doc:name="Fetchs a compaint by Id" doc:id="413389fb-bdc7-460f-9be9-b9408dfe1434" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from complaints where CPID= :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	'id': attributes.uriParams.'complaintId'
+}]]]></db:input-parameters>
+		</db:query-single>
+		<choice doc:name="Choice" doc:id="bf2a0209-464e-40bd-b4df-cf2a00ace0ea" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="GetComplaint" doc:id="53b785fb-5497-4311-be42-1b9507091198" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	complaintID: payload.CPID,
+	description: payload.description default "",
+	status: payload.status default "",
+	customerID: payload.customerID default "",
+	orderNumber: payload.orderNumber default "",
+	productCode: payload.productCode default ""
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Error message" doc:id="956a226f-3003-490c-97e6-432960b3ede0" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Couldn't find complaint details for given ID: " ++ (vars.complaintId as String default "")
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<set-variable value="#[500]" doc:name="httpStatus" doc:id="b7dcf8d5-a3c2-4672-851b-b270cf59cbcd" variableName="httpStatus"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="put-a-complaint-flow" doc:id="dbfc71fa-119e-4a14-959e-d742bd60a69f" >
+		<flow-ref doc:name="variable-sub-flow" doc:id="b2542b2b-5010-498b-b418-ccc2ccbacbce" name="variable-sub-flow"/>
+		<db:query-single doc:name="Fetches details for the Given ComplaintID" doc:id="480bd413-3350-4760-8618-9b1a717a7769" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from complaints where CPID= :complaintID]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	complaintID: attributes.uriParams.'complaintId'
+}]]]></db:input-parameters>
+		</db:query-single>
+		<choice doc:name="Choice" doc:id="066523ce-ae2d-432b-bd13-fdb6eb037443" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<db:update doc:name="Updates the details for a given ID" doc:id="01281eaa-b247-42c1-bdb5-680f6ab1cd46" config-ref="Database_Config">
+					<db:sql ><![CDATA[update complaints set description= :description,orderNumber= :orderNumber,productCode= :productCode where CPID= :complaintID]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	description: vars.description,
+	orderNumber: vars.orderNumber,
+	productCode: vars.productCode,
+	complaintID: attributes.uriParams.'complaintID'
+}]]]></db:input-parameters>
+				</db:update>
+				<ee:transform doc:name="Success message" doc:id="10e18fbf-3418-488c-b7d8-b7802b720126" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Complaint details updated for ID: " ++(vars.'complaintID') as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</when>
+			<otherwise >
+				<db:query-single doc:name="select maximum value of Complaint ID" doc:id="ebc7c058-a147-4322-b43f-8c626446ecf5" config-ref="Database_Config">
+					<db:sql ><![CDATA[select max(CPID) from complaints]]></db:sql>
+				</db:query-single>
+				<ee:transform doc:name="Transform Message" doc:id="9659ad81-e99e-4904-90c0-c2f847b6a38f">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	'CPID':  "CP" ++((payload."max(CPID)"[2 to 4] as Number)+1),
+	'status': "Opened"
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<db:insert doc:name="Create New Complaint" doc:id="1dcb410e-f0ef-4e58-b4a4-93a936fc2310" config-ref="Database_Config">
+					<db:sql ><![CDATA[insert into complaints(CPID,description,status,orderNumber,productCode,customerID)
+values(:id, :description, :status, :orderNo, :productCode, :customerID)]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	'id': payload.CPID,
+	'description': vars.description,
+	'status': payload.status,
+	'orderNo': vars.orderNumber,
+	'productCode': vars.productCode,
+	'customerID': vars.customerID
+	
+}]]]></db:input-parameters>
+				</db:insert>
+				<db:query-single doc:name="Query single" doc:id="68f2bf65-ce62-47e4-a9c5-9379c3f1b9ca" config-ref="Database_Config">
+					<db:sql ><![CDATA[select max(CPID) from complaints]]></db:sql>
+				</db:query-single>
+				<ee:transform doc:name="Success message" doc:id="0e10c72a-2907-4ec5-832c-02559a79fe99" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"Message": "Complaint added for ID: " ++ (payload."max(CPID)") as String
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="get-all-complaints-flow" doc:id="92626c2c-08e7-4ec9-afd5-e1ccb81385cf" >
+		<db:select doc:name="Fetches all Complaint Details" doc:id="d484a227-4330-4020-95d6-507bf12d5006" config-ref="Database_Config">
+			<db:sql ><![CDATA[select * from complaints]]></db:sql>
+		</db:select>
+		<ee:transform doc:name="All Complaints" doc:id="9ef7a3bc-9768-4ea9-8e32-26f6c296aaec" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload map ( payload01 , indexOfPayload01 ) -> {
+	complaintID: payload01.CPID,
+	description: payload01.description default "",
+	status: payload01.status default "",
+	customerID: payload01.customerID default "",
+	orderNumber: payload01.orderNumber default "",
+	productCode: payload01.productCode default ""
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
